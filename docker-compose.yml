@@ -1,0 +1,18 @@
+services:
+  edge:
+    build: ./edge
+    container_name: edge_processor
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8g
+    environment:
+      - VIDEO_SOURCE=/data/samples/input.mp4  
+      - SAMPLER_MODE=motion
+      - MOTION_THR=12.0
+      - HEARTBEAT_S=2.0
+    volumes:
+      - ./results:/results
+      - ./samples:/data/samples:ro            
+    command: ["python","/app/app.py"]
