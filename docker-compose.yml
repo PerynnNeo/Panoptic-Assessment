@@ -8,11 +8,23 @@ services:
           cpus: '4.0'
           memory: 8g
     environment:
-      - VIDEO_SOURCE=/data/samples/input.mp4  
+      - VIDEO_SOURCE=/data/samples/input.mp4
       - SAMPLER_MODE=motion
       - MOTION_THR=12.0
       - HEARTBEAT_S=2.0
+      - CLOUD_URL=http://cloud:8000/ingest
     volumes:
       - ./results:/results
-      - ./samples:/data/samples:ro            
+      - ./samples:/data/samples:ro
     command: ["python","/app/app.py"]
+
+  cloud:
+    build: ./cloud
+    container_name: cloud_analyzer
+    environment:
+      - LOITER_SECONDS=10
+    volumes:
+      - ./results:/results
+    ports:
+      - "8000:8000"
+    command: ["uvicorn","server:app","--host","0.0.0.0","--port","8000"]

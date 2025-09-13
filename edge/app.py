@@ -1,8 +1,11 @@
 import os, time, json
+import cv2
+
 from metrics import EdgeMetrics
 from video_source import open_source
 from detector import HogPersonDetector
 from sampler import Sampler
+from sender import post_frame
 
 RESULTS_DIR = "/results"
 os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -18,6 +21,7 @@ VIDEO_SOURCE = env("VIDEO_SOURCE", "samples/input.mp4")
 SAMPLER_MODE = env("SAMPLER_MODE", "motion")
 MOTION_THR   = env("MOTION_THR", 12.0, float)
 HEARTBEAT_S  = env("HEARTBEAT_S", 2.0, float)
+CLOUD_URL = env("CLOUD_URL", "http://cloud:8000/ingest")
 
 def main():
     print("[EDGE] starting with config:",
@@ -48,11 +52,15 @@ def main():
             forward = sampler.should_forward(frame, persons, t2)
             metrics.mark("sample_decision", frame_id, t2)
             if forward:
+                try:
+                    resp = post_frame(CLOUD_URL, frame, persons, ts_capture=t0)
+                    if 'cloud_latency_ms' in resp:
+                        print(f"[EDGE->CLOUD] cloud_latency_ms={resp['cloud_latency_ms']:.1f} e2e_est_ms={resp.get('e2e_est_ms','')}")
+                except Exception as e:
+                    print("[EDGE->CLOUD] send failed:", e)
                 metrics.increment_forwarded()
-
             metrics.tick_fps()
             metrics.maybe_periodic_print()
-
             frame_id += 1
     finally:
         cap.release()
