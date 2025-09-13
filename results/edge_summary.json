@@ -1,6 +1,8 @@
 {
-  "runtime_s": 552.5,
-  "frames": 17206,
-  "forwarded": 14943,
-  "avg_fps": 34.05
+  "runtime_s": 886.53,
+  "frames": 26705,
+  "forwarded": 21777,
+  "avg_fps": 42.69,
+  "sender_sent": 21595,
+  "sender_dropped": 182
 }

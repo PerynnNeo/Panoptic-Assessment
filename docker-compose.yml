@@ -8,11 +8,13 @@ services:
           cpus: '4.0'
           memory: 8g
     environment:
-      - VIDEO_SOURCE=/data/samples/input.mp4
+      - VIDEO_SOURCE=rtsp://rtsp:8554/stream?tcp
       - SAMPLER_MODE=motion
       - MOTION_THR=12.0
       - HEARTBEAT_S=2.0
       - CLOUD_URL=http://cloud:8000/ingest
+      - PYTHONUNBUFFERED=1
+
     volumes:
       - ./results:/results
       - ./samples:/data/samples:ro
@@ -28,3 +30,9 @@ services:
     ports:
       - "8000:8000"
     command: ["uvicorn","server:app","--host","0.0.0.0","--port","8000"]
+  rtsp:
+    image: bluenviron/mediamtx:latest
+    container_name: rtsp_server
+    ports:
+      - "8554:8554"   
+

@@ -14,4 +14,4 @@ ENV SAMPLER_MODE=motion
 ENV MOTION_THR=12.0
 ENV HEARTBEAT_S=2.0
 
-CMD ["python","/app/app.py"]
+CMD ["python","-u","/app/app.py"]
