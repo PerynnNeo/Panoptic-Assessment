@@ -1,11 +1,33 @@
+version: "3.8"
+
 services:
+  rtsp:
+    image: bluenviron/mediamtx:latest
+    container_name: rtsp_server
+    ports:
+      - "8554:8554"
+
+  cloud:
+    build: ./cloud
+    container_name: cloud_analyzer
+    environment:
+      - LOITER_SECONDS=10
+      - ACT_ANNOTATE=1          
+      - ACT_ANNOTATE_FPS=15
+      - ACT_ANNOTATE_OUT=/results/annotated_activity.avi     
+    volumes:
+      - ./results:/results     
+    ports:
+      - "8000:8000"
+    command: ["uvicorn","server:app","--host","0.0.0.0","--port","8000"]
+
   edge:
     build: ./edge
     container_name: edge_processor
     deploy:
       resources:
         limits:
-          cpus: '4.0'
+          cpus: "4.0"
           memory: 8g
     environment:
       - VIDEO_SOURCE=rtsp://rtsp:8554/stream?tcp
@@ -13,26 +35,21 @@ services:
       - MOTION_THR=12.0
       - HEARTBEAT_S=2.0
       - CLOUD_URL=http://cloud:8000/ingest
-      - PYTHONUNBUFFERED=1
+      - PYTHONUNBUFFERED=1      # unbuffered logs
+      - ANNOTATE=1              
+      - ANNOTATE_FPS=15
+      - DET_MIN_CONF=0.35       
+      - DET_NMS_IOU=0.40
+      - DET_MIN_H_FRAC=0.12
+      - DET_MIN_W_FRAC=0.06
+      - DET_AR_MIN=1.25
+      - DET_AR_MAX=4.0
+      - DET_BORDER_FRAC=0.02
 
     volumes:
       - ./results:/results
-      - ./samples:/data/samples:ro
-    command: ["python","/app/app.py"]
-
-  cloud:
-    build: ./cloud
-    container_name: cloud_analyzer
-    environment:
-      - LOITER_SECONDS=10
-    volumes:
-      - ./results:/results
-    ports:
-      - "8000:8000"
-    command: ["uvicorn","server:app","--host","0.0.0.0","--port","8000"]
-  rtsp:
-    image: bluenviron/mediamtx:latest
-    container_name: rtsp_server
-    ports:
-      - "8554:8554"   
-
+      - ./samples:/samples:ro
+    depends_on:
+      - cloud
+      - rtsp
+    command: ["python","-u","/app/app.py"]
